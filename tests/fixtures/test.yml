@@ -1,0 +1,29 @@
+transitions:
+  draft:
+    - input: draft
+      to: draft
+    - input: review
+      to: review
+    - input: schedule
+      to: scheduled
+  review:
+    - input: reject
+      to: draft
+    - input: schedule
+      to: scheduled
+  scheduled:
+    - input: publish
+      to: published
+  published:
+    - input: archive
+      to: archived
+    - input: unpublish
+      to: unpublished
+  archived:
+    - input: unpublish
+      to: unpublished
+defaults:
+  initialState: draft
+  guard:
+    class: Wellnet\StateMachine\DummyGuard
+

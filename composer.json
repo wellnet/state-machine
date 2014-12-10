@@ -1,0 +1,13 @@
+{
+    "name": "wellnet/state-machine",
+    "require": {
+        "pimple/pimple": "3.0.*@dev",
+        "symfony/event-dispatcher": "3.0.*@dev",
+        "symfony/yaml": "3.0.*@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Wellnet\\StateMachine\\": ["src/", "tests/unit/"]
+        }
+    }
+}
