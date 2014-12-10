@@ -1,9 +1,9 @@
 {
     "name": "wellnet/state-machine",
     "require": {
-        "pimple/pimple": "3.0.*@dev",
-        "symfony/event-dispatcher": "3.0.*@dev",
-        "symfony/yaml": "3.0.*@dev"
+        "pimple/pimple": "3.0.*",
+        "symfony/event-dispatcher": "2.6.*",
+        "symfony/yaml": "2.6.*"
     },
     "autoload": {
         "psr-4": {
