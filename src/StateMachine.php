@@ -2,7 +2,8 @@
 
 namespace Wellnet\StateMachine;
 
-// TODO fix double dependencies
+use Pimple\Container;
+use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Yaml\Yaml;
 
@@ -31,6 +32,11 @@ class StateMachine {
   private $currentState = NULL;
 
   /**
+   * @var Container
+   */
+  private $container;
+
+  /**
    * @var EventDispatcher
    */
   private $eventDispatcher;
@@ -52,29 +58,38 @@ class StateMachine {
   private $started = FALSE;
 
   /**
+   * @param Container $container
    * @param EventDispatcher $eventDispatcher
    * @param null $file path to a yaml configuration file
    * @internal param State $initial
    */
-  public function __construct(EventDispatcher $eventDispatcher, $file = NULL) {
+  public function __construct(Container $container, EventDispatcher $eventDispatcher, $file = NULL) {
     // TODO analysis: accept $config (instead of $file) to remove symfony/yaml dependency and generalize the API
     // TODO improvement: manage set of initial and final states
+    $this->container = $container;
     $this->eventDispatcher = $eventDispatcher;
     $this->file = $file;
+
+    $this->eventDispatcher->addListener(
+      StateMachineEvents::INPUT,
+      array(new InputListener($this), 'onStateMachineInput'));
   }
 
-  /**
-   * @param string $file
-   */
-  private function load($file) {
-    $config = Yaml::parse($file);
-    $defaultGuard = new $config['defaults']['guard']['class']();
+  private function load() {
+    $config = Yaml::parse($this->file);
+
+    $stateClass = isset($this->container['wellnet.state-machine.state']) ?
+      $this->container['wellnet.state-machine.state'] : '\\Wellnet\\StateMachine\\State';
+    $transitionClass = isset($this->container['wellnet.state-machine.transition']) ?
+      $this->container['wellnet.state-machine.transition'] : '\\Wellnet\\StateMachine\\Transition';
+    $defaultGuardClass = new $config['defaults']['guard']['class']();
+
     foreach ($config['transitions'] as $source => $destinations) {
-      $from = $this->getOrCreateState($source);
+      $from = $this->getOrCreateState($source, $stateClass);
       foreach ($destinations as $destination) {
-        $to = $this->getOrCreateState($destination['to']);
-        $guard = isset($destination['guard']) ? new $destination['guard']() : $defaultGuard;
-        $this->addTransition(new Transition($from, $destination['input'], $to, $guard));
+        $to = $this->getOrCreateState($destination['to'], $stateClass);
+        $guard = isset($destination['guard']) ? new $destination['guard']() : $defaultGuardClass;
+        $this->addTransition(new $transitionClass($from, $destination['input'], $to, $guard));
       }
     }
     $this->defaultInitialState = $config['defaults']['initialState'];
@@ -95,7 +110,7 @@ class StateMachine {
     $this->checkInitialization();
 
     if (isset($this->file)) {
-      $this->load($this->file);
+      $this->load();
     }
 
     if (isset($initialStateName)) {
@@ -109,6 +124,8 @@ class StateMachine {
     }
 
     $this->started = TRUE;
+    $this->eventDispatcher->dispatch(StateMachineEvents::START, new Event());
+
     return $this;
   }
 
@@ -130,7 +147,7 @@ class StateMachine {
   public function getAcceptedInputs() {
     $acceptedInput = array();
 
-    if (isset($this->currentState)) {
+    if ($this->started) {
       $currentStateName = $this->currentState->getName();
       if (isset($this->transitions[$currentStateName])) {
         $acceptedInput = $this->transitions[$currentStateName];
@@ -144,10 +161,10 @@ class StateMachine {
    * @param $name
    * @return State
    */
-  private function getOrCreateState($name) {
+  private function getOrCreateState($name, $stateClass) {
     $state = $this->getState($name);
     if ($state == NULL) {
-      $state = new State($name);
+      $state = new $stateClass($name);
       $this->addState($state);
     }
     return $state;
@@ -160,8 +177,7 @@ class StateMachine {
   public function addState(State $state) {
     $this->checkInitialization();
 
-    // TODO throw DuplicateStateException
-    $state->setStateMachine($this);
+    // TODO throw DuplicateStateException or define a behavior
     $this->states[$state->getName()] = $state;
     return $this;
   }
@@ -172,8 +188,6 @@ class StateMachine {
    */
   public function addTransition(Transition $transition) {
     $this->checkInitialization();
-
-    $transition->setStateMachine($this);
 
     $source = $transition->getSource()->getName();
     if (!isset($this->transitions[$source])) {
@@ -189,7 +203,6 @@ class StateMachine {
    * @param array $context
    *
    * @return $this
-   * @throws TransitionNotAllowedException
    */
   public function executeTransition($input, $context = array()) {
     if (!$this->started) {
@@ -199,14 +212,17 @@ class StateMachine {
     $transition = $this->getTransition($input);
     $transitionEvent = new TransitionEvent($transition);
 
-    $this->eventDispatcher->dispatch(RwfEvents::BEFORE_TRANSITION, $transitionEvent);
+    $this->eventDispatcher->dispatch(StateMachineEvents::BEFORE_TRANSITION, $transitionEvent);
 
-    if ($transition === NULL || !$transition->getGuard()->allow($context)) {
-      $this->eventDispatcher->dispatch(RwfEvents::AFTER_TRANSITION_FAILED, $transitionEvent);
+    if ($transition === NULL) {
+      $this->eventDispatcher->dispatch(StateMachineEvents::TRANSITION_NOT_AVAILABLE, $transitionEvent);
+    }
+    elseif (!$transition->getGuard()->allow($context)) {
+      $this->eventDispatcher->dispatch(StateMachineEvents::TRANSITION_NOT_ALLOWED, $transitionEvent);
     }
     else {
       $this->currentState = $transition->getDestination();
-      $this->eventDispatcher->dispatch(RwfEvents::AFTER_TRANSITION_SUCCEEDED, $transitionEvent);
+      $this->eventDispatcher->dispatch(StateMachineEvents::TRANSITION_SUCCEEDED, $transitionEvent);
     }
 
     return $this;

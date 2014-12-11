@@ -1,5 +1,11 @@
 {
     "name": "wellnet/state-machine",
+    "authors": [
+        {
+            "name": "Wellnet S.r.l.",
+            "email": "info@wellnet.it"
+        }
+    ],
     "require": {
         "pimple/pimple": "3.0.*",
         "symfony/event-dispatcher": "2.6.*",

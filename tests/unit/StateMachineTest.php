@@ -3,6 +3,8 @@
 use Wellnet\StateMachine\StateMachine;
 use Wellnet\StateMachine\State;
 use Wellnet\StateMachine\Transition;
+use Wellnet\StateMachine\StateMachineEvents;
+use Wellnet\StateMachine\TestEventSubscriber;
 use Pimple\Container;
 
 /**
@@ -20,13 +22,14 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
 
   public static function setUpBeforeClass() {
     self::$c = new Container();
-    self::$c->register(new Wellnet\StateMachine\StateMachineServiceProvider());
+    self::$c->register(new Wellnet\StateMachine\TestServiceProvider());
   }
 
-  public function testUnstartedMachine() {
+  public function testMachineNotStarted() {
     /** @var StateMachine $machine */
-    $machine = self::$c['rwf.state_machine'];
+    $machine = self::$c['state_machine'];
     $this->assertNull($machine->getCurrentState());
+    $this->assertEmpty($machine->getAcceptedInputs());
   }
 
   /**
@@ -34,7 +37,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
    */
   public function testStartTwice() {
     /** @var StateMachine $machine */
-    $machine = self::$c['rwf.state_machine']
+    $machine = self::$c['state_machine']
       ->executeTransition('review', array('user' => NULL))
       ->start();
   }
@@ -44,7 +47,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
    */
   public function testAddStateAfterStart() {
     /** @var StateMachine $machine */
-    $machine = self::$c['rwf.state_machine']
+    $machine = self::$c['state_machine']
       ->executeTransition('review', array('user' => NULL))
       ->addState(new State('new'));
   }
@@ -55,21 +58,29 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
   public function testAddTransitionAfterStart() {
     /** @var StateMachine $machine */
     $t = new Transition(new State('new'), 'input', new State('new2'));
-    $machine = self::$c['rwf.state_machine']
+    $machine = self::$c['state_machine']
       ->executeTransition('review', array('user' => NULL))
       ->addTransition($t);
   }
 
   public function workflowProvider() {
     return array(
+      array(
         array(
-          array('draft', 'review', 'reject', 'schedule', 'publish', 'archive', 'unpublish'),
-          'unpublished'
+          'draft',
+          'review',
+          'reject',
+          'schedule',
+          'publish',
+          'archive',
+          'unpublish'
         ),
-        array(
-          array('schedule', 'publish'),
-          'published'
-        )
+        'unpublished'
+      ),
+      array(
+        array('schedule', 'publish'),
+        'published'
+      )
     );
   }
 
@@ -78,22 +89,25 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
    */
   public function testValidWorkflow($inputs, $finalState) {
     /** @var StateMachine $machine */
-    $machine = self::$c['rwf.state_machine'];
-    foreach($inputs as $input) {
-      $machine ->executeTransition($input, array('user' => NULL));
+    $machine = self::$c['state_machine'];
+    foreach ($inputs as $input) {
+      $machine->executeTransition($input, array('user' => NULL));
     }
-    $this->assertequals($machine->getCurrentState()->getName(), $finalState);
+    $this->assertEquals($machine->getCurrentState()->getName(), $finalState);
   }
 
-  public function testExecuteInvalidTransition() {
+  public function testNotAvailableTransition() {
     /** @var StateMachine $machine */
-    $machine = self::$c['rwf.state_machine']
-      ->executeTransition('reject', array('user' => NULL));
+    $machine = self::$c['state_machine'];
+    $subscriber = new TestEventSubscriber();
+    $machine->getEventDispatcher()->addSubscriber($subscriber);
+    $machine->executeTransition('reject', array('user' => NULL));
+    $this->assertContains(StateMachineEvents::TRANSITION_NOT_AVAILABLE, $subscriber->getEvents());
   }
 
   public function testAcceptedInputs() {
     /** @var StateMachine $machine */
-    $machine = self::$c['rwf.state_machine'];
+    $machine = self::$c['state_machine'];
     $machine->start();
     $this->assertCount(3, $machine->getAcceptedInputs());
   }

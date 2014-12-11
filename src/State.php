@@ -13,11 +13,6 @@ class State {
   private $name;
 
   /**
-   * @var StateMachine
-   */
-  private $stateMachine;
-
-  /**
    * @param $name
    */
   public function __construct($name) {
@@ -32,13 +27,6 @@ class State {
   }
 
   /**
-   * @param StateMachine $stateMachine
-   */
-  public function setStateMachine(StateMachine $stateMachine) {
-    $this->stateMachine = $stateMachine;
-  }
-
-  /**
    * @param State $otherState
    *
    * @return bool
@@ -47,4 +35,4 @@ class State {
     return $this->getName() === $otherState->getName();
   }
 
-} 
+}

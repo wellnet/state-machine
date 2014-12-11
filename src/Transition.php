@@ -28,11 +28,6 @@ class Transition {
   private $guard;
 
   /**
-   * @var StateMachine $stateMachine
-   */
-  private $stateMachine;
-
-  /**
    * @param State $source
    * @param $input
    * @param State $destination
@@ -76,13 +71,6 @@ class Transition {
    */
   public function getGuard() {
     return $this->guard;
-  }
-
-  /**
-   * @param mixed $stateMachine
-   */
-  public function setStateMachine($stateMachine) {
-    $this->stateMachine = $stateMachine;
   }
 
 }
