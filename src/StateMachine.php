@@ -55,7 +55,7 @@ class StateMachine {
   /**
    * @var boolean
    */
-  private $started = FALSE;
+  private $initialized = FALSE;
 
   /**
    * @param Container $container
@@ -82,17 +82,39 @@ class StateMachine {
       $this->container['wellnet.state-machine.state'] : '\\Wellnet\\StateMachine\\State';
     $transitionClass = isset($this->container['wellnet.state-machine.transition']) ?
       $this->container['wellnet.state-machine.transition'] : '\\Wellnet\\StateMachine\\Transition';
-    $defaultGuardClass = new $config['defaults']['guard']['class']();
+    $defaultGuardClass = $config['defaults']['guard']['class'];
 
     foreach ($config['transitions'] as $source => $destinations) {
       $from = $this->getOrCreateState($source, $stateClass);
       foreach ($destinations as $destination) {
         $to = $this->getOrCreateState($destination['to'], $stateClass);
-        $guard = isset($destination['guard']) ? new $destination['guard']() : $defaultGuardClass;
+        $guardClass = isset($destination['guard']) ?
+          $destination['guard'] : $defaultGuardClass;
+        $guard = (new \ReflectionClass($guardClass))->newInstance();
         $this->addTransition(new $transitionClass($from, $destination['input'], $to, $guard));
       }
     }
     $this->defaultInitialState = $config['defaults']['initialState'];
+  }
+
+  private function init($stateName = NULL) {
+    $this->preventReinitialization();
+
+    if (isset($this->file)) {
+      $this->load();
+    }
+
+    if (isset($stateName)) {
+      $this->currentState = $this->getState($stateName);
+    }
+    elseif (isset($this->defaultInitialState)) {
+      $this->currentState = $this->getState($this->defaultInitialState);
+    }
+    else {
+      throw new \Exception('An $initialStateName must be provided or a default initial state must be set in the configuration');
+    }
+
+    $this->initialized = TRUE;
   }
 
   /**
@@ -102,30 +124,18 @@ class StateMachine {
    * the $file['defaults]['initialState'] state passed to the constructor. If
    * neither is available, the method will throw an exception.
    *
-   * @param State $initialStateName the name of an existing state
+   * @param $initialStateName
    * @return $this
    * @throws \Exception
    */
   public function start($initialStateName = NULL) {
-    $this->checkInitialization();
-
-    if (isset($this->file)) {
-      $this->load();
-    }
-
-    if (isset($initialStateName)) {
-      $this->currentState = $this->getState($initialStateName);
-    }
-    elseif (isset($this->defaultInitialState)) {
-      $this->currentState = $this->getState($this->defaultInitialState);
-    }
-    else {
-      throw new \Exception('An $initialStateName must be provided or a default initial state must be set in the configuration');
-    }
-
-    $this->started = TRUE;
+    $this->init($initialStateName);
     $this->eventDispatcher->dispatch(StateMachineEvents::START, new Event());
+    return $this;
+  }
 
+  public function resume($resumedState) {
+    $this->init($resumedState);
     return $this;
   }
 
@@ -147,7 +157,7 @@ class StateMachine {
   public function getAcceptedInputs() {
     $acceptedInput = array();
 
-    if ($this->started) {
+    if ($this->initialized) {
       $currentStateName = $this->currentState->getName();
       if (isset($this->transitions[$currentStateName])) {
         $acceptedInput = $this->transitions[$currentStateName];
@@ -175,7 +185,7 @@ class StateMachine {
    * @return $this
    */
   public function addState(State $state) {
-    $this->checkInitialization();
+    $this->preventReinitialization();
 
     // TODO throw DuplicateStateException or define a behavior
     $this->states[$state->getName()] = $state;
@@ -187,7 +197,7 @@ class StateMachine {
    * @return $this
    */
   public function addTransition(Transition $transition) {
-    $this->checkInitialization();
+    $this->preventReinitialization();
 
     $source = $transition->getSource()->getName();
     if (!isset($this->transitions[$source])) {
@@ -205,7 +215,7 @@ class StateMachine {
    * @return $this
    */
   public function executeTransition($input, $context = array()) {
-    if (!$this->started) {
+    if (!$this->initialized) {
       $this->start();
     }
 
@@ -272,9 +282,8 @@ class StateMachine {
    *
    * @throws \Exception
    */
-  private function checkInitialization() {
-    // TODO refactoring: find a better name
-    if ($this->started) {
+  private function preventReinitialization() {
+    if ($this->initialized) {
       throw new \Exception('$this StateMachine has already been started');
     }
   }
