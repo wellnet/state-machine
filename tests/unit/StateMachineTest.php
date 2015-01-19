@@ -29,7 +29,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     /** @var StateMachine $machine */
     $machine = self::$c['state_machine'];
     $this->assertNull($machine->getCurrentState());
-    $this->assertEmpty($machine->getAcceptedInputs());
+    $this->assertEmpty($machine->getAllowedTransitions());
   }
 
   /**
@@ -109,7 +109,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     /** @var StateMachine $machine */
     $machine = self::$c['state_machine'];
     $machine->start();
-    $this->assertCount(3, $machine->getAcceptedInputs());
+    $this->assertCount(3, $machine->getAllowedTransitions());
   }
 
 }

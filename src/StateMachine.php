@@ -31,6 +31,7 @@ class StateMachine {
    */
   private $currentState = NULL;
 
+  // TODO refactor: there's risk of using it as a service locator
   /**
    * @var Container
    */
@@ -90,7 +91,9 @@ class StateMachine {
         $to = $this->getOrCreateState($destination['to'], $stateClass);
         $guardClass = isset($destination['guard']) ?
           $destination['guard'] : $defaultGuardClass;
-        $guard = (new \ReflectionClass($guardClass))->newInstance();
+        $guardArgs = isset($destination['guardArgs']) ?
+          $destination['guardArgs'] : array();
+        $guard = (new \ReflectionClass($guardClass))->newInstance($guardArgs);
         $this->addTransition(new $transitionClass($from, $destination['input'], $to, $guard));
       }
     }
@@ -134,6 +137,10 @@ class StateMachine {
     return $this;
   }
 
+  public function isRunning() {
+    return $this->initialized;
+  }
+
   public function resume($resumedState) {
     $this->init($resumedState);
     return $this;
@@ -152,19 +159,25 @@ class StateMachine {
    *
    * WARNING: if the machine has not been started, the array is empty.
    *
+   * @param array $context
    * @return array
    */
-  public function getAcceptedInputs() {
-    $acceptedInput = array();
+  public function getAllowedTransitions($context = array()) {
+    $allowedTransitions = array();
 
     if ($this->initialized) {
       $currentStateName = $this->currentState->getName();
       if (isset($this->transitions[$currentStateName])) {
-        $acceptedInput = $this->transitions[$currentStateName];
+        $availableTransitions = $this->transitions[$currentStateName];
+        foreach ($availableTransitions as $transition) {
+          if ($transition->getGuard()->allow($context)){
+            $allowedTransitions[] = $transition;
+          }
+        }
       }
     }
 
-    return $acceptedInput;
+    return $allowedTransitions;
   }
 
   /**

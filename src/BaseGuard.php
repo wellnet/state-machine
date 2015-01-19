@@ -12,6 +12,8 @@ abstract class BaseGuard implements GuardInterface {
    */
   protected $transition;
 
+  function __construct() {
+  }
 
   /**
    * @param Transition $transition

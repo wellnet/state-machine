@@ -2,6 +2,10 @@ transitions:
   draft:
     - input: draft
       to: draft
+      guardArgs:
+        - allowedRoles:
+          - autore
+          - moderatore
     - input: review
       to: review
     - input: schedule
