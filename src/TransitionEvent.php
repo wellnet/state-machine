@@ -5,7 +5,9 @@ namespace Wellnet\StateMachine;
 use Symfony\Component\EventDispatcher\Event;
 
 /**
- * Class TransitionEvent
+ * Event fired by the state machine. It represents a transition.
+ *
+ * @package Wellnet\StateMachine
  */
 class TransitionEvent extends Event {
 

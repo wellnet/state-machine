@@ -7,12 +7,6 @@ use Wellnet\StateMachine\StateMachineEvents;
 use Wellnet\StateMachine\TestEventSubscriber;
 use Pimple\Container;
 
-/**
- * Created by PhpStorm.
- * User: Franz
- * Date: 28/11/2014
- * Time: 11:17
- */
 class StateMachineTest extends \PHPUnit_Framework_TestCase {
 
   /**

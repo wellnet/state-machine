@@ -1,14 +1,12 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Franz
- * Date: 10/12/2014
- * Time: 06:26
- */
 
 namespace Wellnet\StateMachine;
 
 
+/**
+ * listener designed to be registered with the StateMachineEvents::INPUT event
+ * @package Wellnet\StateMachine
+ */
 class InputListener {
 
   private $stateMachine;
@@ -17,6 +15,11 @@ class InputListener {
     $this->stateMachine = $stateMachine;
   }
 
+  /**
+   * Handler invoked to manage the event.
+   *
+   * @param InputEvent $event
+   */
   public function onStateMachineInput(InputEvent $event) {
 
     $this->stateMachine->executeTransition(

@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Franz
- * Date: 11/12/2014
- * Time: 07:36
- */
 
 namespace Wellnet\StateMachine;
 

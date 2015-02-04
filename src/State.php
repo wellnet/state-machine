@@ -3,7 +3,9 @@
 namespace Wellnet\StateMachine;
 
 /**
- * Class State
+ * Represents a state of the machine.
+ *
+ * @package Wellnet\StateMachine
  */
 class State {
 
@@ -27,8 +29,9 @@ class State {
   }
 
   /**
-   * @param State $otherState
+   * Two states are equal if they have the same name.
    *
+   * @param State $otherState
    * @return bool
    */
   public function equal(State $otherState) {

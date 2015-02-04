@@ -3,7 +3,7 @@
 namespace Wellnet\StateMachine;
 
 /**
- * Class CallbackGuard
+ * GuardInterface that allows all transitions.
  */
 class DummyGuard extends BaseGuard {
 

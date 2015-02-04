@@ -1,14 +1,12 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Franz
- * Date: 01/12/2014
- * Time: 16:35
- */
 
 namespace Wellnet\StateMachine;
 
-
+/**
+ * Defines the events triggered and consumed by the StateMachine framework.
+ *
+ * @package Wellnet\StateMachine
+ */
 class StateMachineEvents {
 
   // events produced by the StateMachine
@@ -17,7 +15,6 @@ class StateMachineEvents {
   const TRANSITION_SUCCEEDED = 'state-machine.transition.succeeded';
   const TRANSITION_NOT_ALLOWED = 'state-machine.transition.not.allowed';
   const TRANSITION_NOT_AVAILABLE = 'state-machine.transition.not.available';
-  //const AFTER_TRANSITION_UNCHANGED = 'state-machine.after.transition.unchanged';
 
   // events consumed by the StateMachine
   const INPUT = 'state-machine.input';

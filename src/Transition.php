@@ -3,7 +3,9 @@
 namespace Wellnet\StateMachine;
 
 /**
- * Class Transition
+ * Represents a possible transition between to states of the machine.
+ *
+ * @package Wellnet\StateMachine
  */
 class Transition {
 

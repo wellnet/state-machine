@@ -3,12 +3,12 @@
 namespace Wellnet\StateMachine;
 
 /**
- * Class BaseGuard
+ * Base implementation of the GuardInterface
  */
 abstract class BaseGuard implements GuardInterface {
 
   /**
-   * @var
+   * @var Transition
    */
   protected $transition;
 

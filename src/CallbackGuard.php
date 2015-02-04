@@ -3,7 +3,8 @@
 namespace Wellnet\StateMachine;
 
 /**
- * Class CallbackGuard
+ * GuardInterface implementation that leverages a callback (provided by the
+ * constructor) that accept the $context as parameter.
  */
 class CallbackGuard extends BaseGuard {
 

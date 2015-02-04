@@ -1,16 +1,16 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Franz
- * Date: 10/12/2014
- * Time: 06:29
- */
 
 namespace Wellnet\StateMachine;
 
 
 use Symfony\Component\EventDispatcher\Event;
 
+/**
+ * Event consumed by the state machine. It represents an input sent to the state
+ * machine.
+ *
+ * @package Wellnet\StateMachine
+ */
 class InputEvent extends Event {
 
   /**
@@ -24,7 +24,7 @@ class InputEvent extends Event {
   private $context;
 
   /**
-   * @param null $input
+   * @param $input
    * @param array $context
    */
   public function __construct($input, array $context = NULL) {
@@ -45,6 +45,5 @@ class InputEvent extends Event {
   public function getInput() {
     return $this->input;
   }
-
 
 }
