@@ -2,7 +2,11 @@ transitions:
   draft:
     - input: draft
       to: draft
+      guard: Wellnet\StateMachine\CompositeGuard
       guardArgs:
+        - componentGuards:
+          - Wellnet\StateMachine\DummyGuard
+          - Wellnet\StateMachine\DummyGuard
         - allowedRoles:
           - autore
           - moderatore
