@@ -309,7 +309,7 @@ class StateMachine {
     }
 
     $transition = $this->getTransition($input);
-    $transitionEvent = new TransitionEvent($transition);
+    $transitionEvent = new TransitionEvent($transition, $context);
 
     $this->eventDispatcher->dispatch(StateMachineEvents::BEFORE_TRANSITION, $transitionEvent);
 

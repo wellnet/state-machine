@@ -17,10 +17,17 @@ class TransitionEvent extends Event {
   private $transition;
 
   /**
-   * @param Transition $transition
+   * @var array
    */
-  public function __construct(Transition $transition = NULL) {
+  private $context;
+
+  /**
+   * @param Transition $transition
+   * @param array $context
+   */
+  public function __construct(Transition $transition = NULL, $context = array()) {
     $this->transition = $transition;
+    $this->context = $context;
   }
 
   /**
@@ -30,4 +37,10 @@ class TransitionEvent extends Event {
     return $this->transition;
   }
 
+  /**
+   * @return array
+   */
+  public function getContext() {
+    return $this->context;
+  }
 }
