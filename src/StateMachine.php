@@ -5,13 +5,12 @@ namespace Wellnet\StateMachine;
 use Pimple\Container;
 use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * Entry point of the StateMachine framework.
  *
  * You can configure the state machine leveraging the API (addState and
- * addTransition methods) or providing a configuration file to the constructor.
+ * addTransition methods) or providing a configuration object to the constructor.
  * See __construct() for more details.
  *
  * After you create an instance, you may invoke start() to optionally provide
@@ -55,9 +54,9 @@ class StateMachine {
   private $defaultInitialState;
 
   /**
-   * @var boolean
+   * @var ConfiguratorInterface
    */
-  private $file;
+  private $configurator;
 
   /**
    * @var boolean
@@ -74,20 +73,15 @@ class StateMachine {
    *
    * Registers an InputListener with the StateMachineEvents::INPUT event.
    *
-   * Please check the test.yml file to see the proper structure of the
-   * configuration file.
-   *
    * @param Container $container
    * @param EventDispatcher $eventDispatcher
-   * @param null $file
-   *   path to a yaml configuration file
+   * @param ConfiguratorInterface $configurator
    */
-  public function __construct(Container $container, EventDispatcher $eventDispatcher, $file = NULL) {
-    // TODO analysis: accept $config (instead of $file) to remove symfony/yaml dependency and generalize the API
+  public function __construct(Container $container, EventDispatcher $eventDispatcher, ConfiguratorInterface $configurator) {
     // TODO improvement: manage set of initial and final states
     $this->container = $container;
     $this->eventDispatcher = $eventDispatcher;
-    $this->file = $file;
+    $this->configurator = $configurator;
 
     $this->eventDispatcher->addListener(
       StateMachineEvents::INPUT,
@@ -95,10 +89,10 @@ class StateMachine {
   }
 
   /**
-   * builds the state machine from the configuration file
+   * builds the state machine from the configuration object
    */
   private function load() {
-    $config = Yaml::parse($this->file);
+    $config = $this->configurator->getConfig();
 
     // check if the container provides custom implementations of State or Transition
     $stateClass = isset($this->container['wellnet.state-machine.state']) ?
@@ -135,10 +129,7 @@ class StateMachine {
    */
   private function init($stateName = NULL) {
     $this->preventReinitialization();
-
-    if (isset($this->file)) {
-      $this->load();
-    }
+    $this->load();
 
     if (isset($stateName)) {
       $this->currentState = $this->getState($stateName);
