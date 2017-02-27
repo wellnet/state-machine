@@ -42,4 +42,16 @@ class CompositeGuard extends BaseGuard {
     }
     return $isAllowed;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTransition(Transition $transition) {
+    parent::setTransition($transition);
+
+    foreach ($this->componentsGuards as $guard) {
+      $guard->setTransition($transition);
+    }
+  }
+
 }
